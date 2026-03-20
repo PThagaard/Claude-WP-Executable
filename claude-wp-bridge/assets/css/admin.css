@@ -173,3 +173,64 @@
 .column-result { width: 150px; }
 .column-time { width: 70px; }
 .column-status { width: 80px; }
+
+/* Version badge */
+.cwpb-version {
+	font-size: 12px;
+	color: #787c82;
+	font-weight: 400;
+	vertical-align: middle;
+}
+
+/* Kill switch card */
+.cwpb-killswitch-card {
+	border-left: 4px solid #00a32a;
+}
+
+.cwpb-disabled-card {
+	border-left-color: #b32d2e;
+}
+
+.cwpb-killswitch-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+}
+
+.cwpb-killswitch-row > div {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+/* Mode badge */
+.cwpb-mode-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.cwpb-mode-read_only {
+	background: #edfaef;
+	color: #00a32a;
+}
+
+.cwpb-mode-read_write {
+	background: #fcf9e8;
+	color: #996800;
+}
+
+.cwpb-mode-full {
+	background: #fcf0f1;
+	color: #b32d2e;
+}
+
+/* Endpoint count */
+.cwpb-endpoint-count {
+	font-size: 12px;
+	color: #787c82;
+}

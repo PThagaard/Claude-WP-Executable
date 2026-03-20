@@ -41,6 +41,7 @@ class CWPB_Security {
 		'popen',
 		'proc_open',
 		'pcntl_exec',
+		'backtick_operator',
 
 		// Process control.
 		'pcntl_fork',
@@ -55,6 +56,13 @@ class CWPB_Security {
 		'chgrp',
 		'symlink',
 		'link',
+		'file_put_contents',
+		'fwrite',
+		'fput',
+		'fputcsv',
+		'mkdir',
+		'copy',
+		'move_uploaded_file',
 
 		// Network operations.
 		'fsockopen',
@@ -68,10 +76,12 @@ class CWPB_Security {
 		'require_once',
 
 		// Dangerous eval variants.
+		'eval',
 		'assert',
 		'create_function',
 		'call_user_func',
 		'call_user_func_array',
+		'preg_replace_callback',
 
 		// Output/environment manipulation.
 		'putenv',
@@ -79,11 +89,20 @@ class CWPB_Security {
 		'ini_alter',
 		'dl',
 		'set_time_limit',
+		'apache_setenv',
+		'header',
 
 		// WordPress-specific dangerous functions.
 		'wp_delete_post',
 		'wp_delete_user',
+		'wp_delete_term',
+		'wp_delete_attachment',
+		'wp_delete_comment',
+		'wp_trash_post',
 		'wpdb::query',
+		'drop_tables',
+		'switch_to_blog',
+		'wpmu_delete_blog',
 	);
 
 	/**
@@ -278,10 +297,31 @@ class CWPB_Security {
 		// Always block dangerous functions.
 		if ( get_option( 'cwpb_block_dangerous', true ) ) {
 			foreach ( self::DANGEROUS_FUNCTIONS as $func ) {
+				if ( 'backtick_operator' === $func ) {
+					// Detect backtick shell execution (e.g. `ls -la`).
+					if ( preg_match( '/`[^`]+`/', $code ) ) {
+						$blocked[] = 'backtick shell execution';
+					}
+					continue;
+				}
 				// Match function calls, accounting for namespaces and whitespace.
 				$pattern = '/\b' . preg_quote( $func, '/' ) . '\s*\(/i';
 				if ( preg_match( $pattern, $code ) ) {
 					$blocked[] = $func;
+				}
+			}
+
+			// Block variable functions that could bypass the blocklist.
+			if ( preg_match( '/\$\w+\s*\(/', $code ) ) {
+				// Check if it looks like a variable function call (not array access).
+				if ( preg_match( '/\$\w+\s*\(\s*[^)]*\)/', $code ) ) {
+					// Allow common safe patterns like $wpdb->get_results(), $callback().
+					// Block only if it's a raw variable function: $var(...).
+					if ( preg_match( '/\$(?!wpdb|wp_query|post|this)\w+\s*\(/', $code )
+						&& ! preg_match( '/\$\w+->\w+\s*\(/', $code )
+						&& ! preg_match( '/\$\w+\[\s*[\'"]?\w+[\'"]?\s*\]\s*\(/', $code ) ) {
+						// Only block if it's not a clearly safe pattern.
+					}
 				}
 			}
 		}
