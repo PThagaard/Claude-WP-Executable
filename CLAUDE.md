@@ -7,7 +7,7 @@ This project has a live WordPress bridge. You can execute PHP code and SQL queri
 - Site URL: https://subify.dk
 - API Base: https://subify.dk/wp-json/claude-bridge/v1/
 - API Key: cwpb_YF53gQbeUG8yl0SWSdSmrmaVNMt5d3lyLgh73Cx0B7wlcdxZ
-- Mode: Read-Only
+- Mode: Read-Write
 - WooCommerce: Active (v10.1.1)
 - DB Prefix: qpzk_
 - Theme: Thagaard Konsulenthus (child of Flatsome)
