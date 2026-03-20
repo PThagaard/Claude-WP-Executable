@@ -39,7 +39,7 @@ No MCP server. No local setup. Works from any device, any Claude Code session (C
 
 ### 1. Install the Plugin
 
-Upload the `wordpress-plugin/` folder to your WordPress site:
+Upload the `claude-wp-bridge/` folder to your WordPress site:
 
 ```
 wp-content/plugins/claude-wp-bridge/
@@ -48,7 +48,7 @@ wp-content/plugins/claude-wp-bridge/
 Or clone this repo and copy:
 
 ```bash
-cp -r wordpress-plugin/ /path/to/wordpress/wp-content/plugins/claude-wp-bridge/
+cp -r claude-wp-bridge/ /path/to/wordpress/wp-content/plugins/claude-wp-bridge/
 ```
 
 Activate the plugin in **WordPress Admin → Plugins**.
@@ -245,7 +245,7 @@ This is an open-source project. Contributions are welcome!
 
 ```
 Claude-WP-Executable/
-├── wordpress-plugin/           # The WordPress plugin
+├── claude-wp-bridge/           # The WordPress plugin
 │   ├── claude-wp-bridge.php    # Main plugin file
 │   ├── includes/
 │   │   ├── class-security.php  # Authentication, rate limiting, code scanning
