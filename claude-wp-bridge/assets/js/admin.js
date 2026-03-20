@@ -13,18 +13,6 @@
 	'use strict';
 
 	/**
-	 * Display the newly generated API key to the user.
-	 *
-	 * @param {string} key    The full API key.
-	 * @param {string} prefix The key prefix for display.
-	 */
-	function showNewKey(key, prefix) {
-		$('#cwpb-new-key').text(key);
-		$('#cwpb-new-key-display').slideDown();
-		$('#cwpb-key-prefix').text(prefix);
-	}
-
-	/**
 	 * Copy text to the clipboard.
 	 *
 	 * @param {string} text    The text to copy.
@@ -64,12 +52,12 @@
 			nonce: cwpb.nonce
 		}, function (response) {
 			if (response.success) {
-				showNewKey(response.data.key, response.data.prefix);
-				alert(cwpb.strings.copy_warning);
+				// Reload so the persistent key display shows the new key.
+				location.reload();
 			} else {
 				alert('Error: ' + (response.data || 'Unknown error'));
+				$button.prop('disabled', false).text(isRegenerate ? 'Regenerate Key' : 'Generate API Key');
 			}
-			$button.prop('disabled', false).text(isRegenerate ? 'Regenerate Key' : 'Generate API Key');
 		}).fail(function () {
 			alert('Request failed. Please try again.');
 			$button.prop('disabled', false).text(isRegenerate ? 'Regenerate Key' : 'Generate API Key');

@@ -28,6 +28,7 @@ $options = array(
 	'cwpb_max_output_size',
 	'cwpb_log_retention_days',
 	'cwpb_api_key_hash',
+	'cwpb_api_key_plain',
 	'cwpb_api_key_prefix',
 	'cwpb_api_key_created',
 );

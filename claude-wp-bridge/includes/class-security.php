@@ -178,6 +178,7 @@ class CWPB_Security {
 		$hash = wp_hash_password( $key );
 
 		update_option( 'cwpb_api_key_hash', $hash );
+		update_option( 'cwpb_api_key_plain', $key );
 		update_option( 'cwpb_api_key_prefix', substr( $key, 0, 10 ) . '...' );
 		update_option( 'cwpb_api_key_created', current_time( 'mysql' ) );
 
@@ -193,6 +194,7 @@ class CWPB_Security {
 	 */
 	public function revoke_api_key() {
 		delete_option( 'cwpb_api_key_hash' );
+		delete_option( 'cwpb_api_key_plain' );
 		delete_option( 'cwpb_api_key_prefix' );
 		delete_option( 'cwpb_api_key_created' );
 	}

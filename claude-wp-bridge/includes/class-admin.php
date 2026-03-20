@@ -209,7 +209,6 @@ class CWPB_Admin {
 				'confirm_clear'    => __( 'Clear all audit log entries? This cannot be undone.', 'claude-wp-bridge' ),
 				'key_copied'       => __( 'API key copied to clipboard!', 'claude-wp-bridge' ),
 				'ai_copied'        => __( 'Connection details copied — paste into your Claude session!', 'claude-wp-bridge' ),
-				'copy_warning'     => __( 'This key will only be shown once. Copy it now and store it securely.', 'claude-wp-bridge' ),
 			),
 		) );
 	}
@@ -279,9 +278,9 @@ class CWPB_Admin {
 	 * @since 1.0.0
 	 */
 	public function render_settings_page() {
-		$has_key    = $this->security->has_api_key();
-		$key_prefix = get_option( 'cwpb_api_key_prefix', '' );
-		$key_date   = get_option( 'cwpb_api_key_created', '' );
+		$has_key   = $this->security->has_api_key();
+		$key_plain = get_option( 'cwpb_api_key_plain', '' );
+		$key_date  = get_option( 'cwpb_api_key_created', '' );
 
 		?>
 		<div class="wrap cwpb-wrap">
@@ -294,39 +293,27 @@ class CWPB_Admin {
 			<div class="cwpb-card">
 				<h2><?php esc_html_e( 'API Key', 'claude-wp-bridge' ); ?></h2>
 
-				<?php if ( $has_key ) : ?>
-					<table class="form-table">
-						<tr>
-							<th><?php esc_html_e( 'Current Key', 'claude-wp-bridge' ); ?></th>
-							<td>
-								<code id="cwpb-key-prefix"><?php echo esc_html( $key_prefix ); ?></code>
-								<?php if ( $key_date ) : ?>
-									<span class="description">
-										<?php
-										printf(
-											/* translators: %s: date string */
-											esc_html__( 'Created: %s', 'claude-wp-bridge' ),
-											esc_html( $key_date )
-										);
-										?>
-									</span>
-								<?php endif; ?>
-							</td>
-						</tr>
-					</table>
-
-					<div id="cwpb-new-key-display" style="display:none;" class="cwpb-notice cwpb-notice-warning">
-						<p><strong><?php esc_html_e( 'New API Key (copy now — it will not be shown again):', 'claude-wp-bridge' ); ?></strong></p>
-						<div class="cwpb-key-container">
-							<code id="cwpb-new-key" class="cwpb-key-value"></code>
-							<button type="button" class="button" id="cwpb-copy-key">
-								<?php esc_html_e( 'Copy', 'claude-wp-bridge' ); ?>
-							</button>
-							<button type="button" class="button button-primary" id="cwpb-copy-ai">
-								<?php esc_html_e( 'Copy to AI', 'claude-wp-bridge' ); ?>
-							</button>
-						</div>
+				<?php if ( $has_key && $key_plain ) : ?>
+					<div class="cwpb-key-container">
+						<code id="cwpb-new-key" class="cwpb-key-value"><?php echo esc_html( $key_plain ); ?></code>
+						<button type="button" class="button" id="cwpb-copy-key">
+							<?php esc_html_e( 'Copy Key', 'claude-wp-bridge' ); ?>
+						</button>
+						<button type="button" class="button button-primary" id="cwpb-copy-ai">
+							<?php esc_html_e( 'Copy to AI', 'claude-wp-bridge' ); ?>
+						</button>
 					</div>
+					<?php if ( $key_date ) : ?>
+						<p class="description">
+							<?php
+							printf(
+								/* translators: %s: date string */
+								esc_html__( 'Created: %s', 'claude-wp-bridge' ),
+								esc_html( $key_date )
+							);
+							?>
+						</p>
+					<?php endif; ?>
 
 					<p>
 						<button type="button" class="button button-secondary" id="cwpb-regenerate-key">
@@ -338,26 +325,37 @@ class CWPB_Admin {
 					</p>
 
 				<?php else : ?>
-					<p><?php esc_html_e( 'No API key configured. Generate one to start using the bridge.', 'claude-wp-bridge' ); ?></p>
+					<?php if ( $has_key ) : ?>
+						<p><?php esc_html_e( 'An API key exists but was created before plaintext storage was enabled. Regenerate to see the full key here.', 'claude-wp-bridge' ); ?></p>
+						<p>
+							<button type="button" class="button button-secondary" id="cwpb-regenerate-key">
+								<?php esc_html_e( 'Regenerate Key', 'claude-wp-bridge' ); ?>
+							</button>
+							<button type="button" class="button cwpb-button-danger" id="cwpb-revoke-key">
+								<?php esc_html_e( 'Revoke Key', 'claude-wp-bridge' ); ?>
+							</button>
+						</p>
+					<?php else : ?>
+						<p><?php esc_html_e( 'No API key configured. Generate one to start using the bridge.', 'claude-wp-bridge' ); ?></p>
+						<p>
+							<button type="button" class="button button-primary" id="cwpb-generate-key">
+								<?php esc_html_e( 'Generate API Key', 'claude-wp-bridge' ); ?>
+							</button>
+						</p>
+					<?php endif; ?>
 
-					<div id="cwpb-new-key-display" style="display:none;" class="cwpb-notice cwpb-notice-warning">
-						<p><strong><?php esc_html_e( 'New API Key (copy now — it will not be shown again):', 'claude-wp-bridge' ); ?></strong></p>
+					<!-- Shown after generating/regenerating a key via AJAX -->
+					<div id="cwpb-new-key-display" style="display:none;">
 						<div class="cwpb-key-container">
 							<code id="cwpb-new-key" class="cwpb-key-value"></code>
 							<button type="button" class="button" id="cwpb-copy-key">
-								<?php esc_html_e( 'Copy', 'claude-wp-bridge' ); ?>
+								<?php esc_html_e( 'Copy Key', 'claude-wp-bridge' ); ?>
 							</button>
 							<button type="button" class="button button-primary" id="cwpb-copy-ai">
 								<?php esc_html_e( 'Copy to AI', 'claude-wp-bridge' ); ?>
 							</button>
 						</div>
 					</div>
-
-					<p>
-						<button type="button" class="button button-primary" id="cwpb-generate-key">
-							<?php esc_html_e( 'Generate API Key', 'claude-wp-bridge' ); ?>
-						</button>
-					</p>
 				<?php endif; ?>
 
 				<!-- Connection Info -->
