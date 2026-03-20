@@ -198,11 +198,12 @@ class CWPB_Admin {
 		);
 
 		wp_localize_script( 'cwpb-admin', 'cwpb', array(
-			'ajax_url'     => admin_url( 'admin-ajax.php' ),
-			'nonce'        => wp_create_nonce( 'cwpb_admin' ),
-			'endpoint_url' => rest_url( 'claude-bridge/v1/' ),
-			'site_name'    => get_bloginfo( 'name' ),
-			'strings'      => array(
+			'ajax_url'        => admin_url( 'admin-ajax.php' ),
+			'nonce'           => wp_create_nonce( 'cwpb_admin' ),
+			'endpoint_url'    => rest_url( 'claude-bridge/v1/' ),
+			'site_name'       => get_bloginfo( 'name' ),
+			'execution_mode'  => get_option( 'cwpb_execution_mode', 'read_only' ),
+			'strings'         => array(
 				'confirm_generate' => __( 'Generate a new API key? The current key will be revoked.', 'claude-wp-bridge' ),
 				'confirm_revoke'   => __( 'Revoke the API key? All active sessions will be disconnected.', 'claude-wp-bridge' ),
 				'confirm_clear'    => __( 'Clear all audit log entries? This cannot be undone.', 'claude-wp-bridge' ),
