@@ -4,7 +4,7 @@ Tags: claude, ai, development, debugging, rest-api
 Requires at least: 5.9
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +60,15 @@ Claude Code uses curl or WebFetch to make HTTPS requests to the plugin's REST AP
 Yes! The plugin works with both Claude Code CLI and web sessions. No local MCP server required.
 
 == Changelog ==
+
+= 2.0.0 =
+* 13 new read-only endpoints: db-schema, options, hooks, cron, rewrite-rules, transients, woocommerce, theme-info, users, taxonomies, media, widgets
+* "Copy to AI" button generates complete AI instruction guide with all endpoints documented
+* Emergency kill switch in admin UI
+* Execution mode badges (Read-Only / Read-Write / Full Access)
+* Enhanced security: expanded blocked function list, sensitive data scrubbing
+* Memory usage tracking in execute responses
+* AI Guide class for server-side instruction generation
 
 = 1.0.0 =
 * Initial release
