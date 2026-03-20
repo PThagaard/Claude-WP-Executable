@@ -95,155 +95,290 @@
 		copyToClipboard(key);
 	});
 
-	// Copy to AI — full instruction block for any Claude session.
+	// Copy to AI — full instruction block for any Claude/AI session.
 	$(document).on('click', '#cwpb-copy-ai', function (e) {
 		e.preventDefault();
-		var key = $('#cwpb-new-key').text();
+		var key = $('#cwpb-new-key').text().trim();
 		if (!key) {
 			return;
 		}
 		var base = cwpb.endpoint_url;
 		var mode = cwpb.execution_mode || 'read_only';
+		var siteName = cwpb.site_name || 'WordPress Site';
 
-		// Build mode-specific guidance.
+		// Derive site URL from the REST base (strip /wp-json/claude-bridge/v1/).
+		var siteUrl = base.replace(/\/wp-json\/claude-bridge\/v1\/$/, '');
+
 		var modeLabel = {
 			'read_only':  'Read-Only',
 			'read_write': 'Read-Write',
 			'full':       'Full'
 		}[mode] || mode;
 
-		var modeNote = '';
+		// Build mode explanation.
+		var modeSection = '';
 		if (mode === 'read_only') {
-			modeNote =
-				'The bridge is in **read-only** mode. You can read any data but cannot:\n' +
-				'- Call write functions (`wp_insert_post`, `wp_update_post`, `update_option`, `wp_mail`, etc.)\n' +
-				'- Run SQL write statements (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`, `TRUNCATE`)\n' +
-				'If you need to make changes, ask the user to switch the execution mode in the bridge settings.\n';
+			modeSection =
+				'## Current Mode: Read-Only\n' +
+				'\n' +
+				'You can read all WordPress data but CANNOT:\n' +
+				'- Call write functions: `wp_insert_post`, `wp_update_post`, `wp_insert_user`, `wp_update_user`, ' +
+				'`update_option`, `add_option`, `delete_option`, `update_post_meta`, `add_post_meta`, `delete_post_meta`, ' +
+				'`update_user_meta`, `add_user_meta`, `delete_user_meta`, `wp_set_object_terms`, `wp_mail`\n' +
+				'- Run SQL write statements: `INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`, `TRUNCATE`, `REPLACE`\n' +
+				'\n' +
+				'If write access is needed, ask the user to change the mode in WP Admin → Claude Bridge → Settings.\n' +
+				'\n';
 		} else if (mode === 'read_write') {
-			modeNote =
-				'The bridge is in **read-write** mode. You can read and write WordPress data freely.\n' +
-				'Functions like `wp_insert_post`, `wp_update_post`, `update_option`, and SQL writes are allowed.\n';
+			modeSection =
+				'## Current Mode: Read-Write\n' +
+				'\n' +
+				'You can read AND write WordPress data. All standard WordPress functions are available including:\n' +
+				'`wp_insert_post`, `wp_update_post`, `update_option`, `add_option`, `update_post_meta`, `wp_mail`, ' +
+				'SQL INSERT/UPDATE/DELETE, etc.\n' +
+				'\n';
 		} else {
-			modeNote =
-				'The bridge is in **full** mode. All WordPress/PHP functions are available with no restrictions beyond the always-blocked dangerous functions.\n';
+			modeSection =
+				'## Current Mode: Full Access\n' +
+				'\n' +
+				'All WordPress/PHP functions are available with no restrictions beyond the always-blocked dangerous functions listed below.\n' +
+				'\n';
 		}
 
 		var text =
-			'# Claude WP Bridge — ' + cwpb.site_name + '\n' +
+			'# Claude WP Bridge — ' + siteName + '\n' +
 			'\n' +
-			'You have access to a live WordPress site via the Claude WP Bridge plugin.\n' +
-			'Use the endpoints below with `curl` to inspect and interact with the site.\n' +
+			'You have access to a live WordPress site through the Claude WP Bridge plugin.\n' +
+			'This plugin exposes a REST API that lets you execute PHP code, run SQL queries, and inspect the WordPress installation.\n' +
+			'All communication happens via `curl` with Bearer token authentication. All responses are JSON.\n' +
 			'\n' +
-			'## Connection\n' +
-			'- **Base URL:** `' + base + '`\n' +
-			'- **API Key:** `' + key + '`\n' +
-			'- **Auth header:** `Authorization: Bearer ' + key + '`\n' +
-			'- **Execution mode:** ' + modeLabel + '\n' +
+			'## Connection Details\n' +
 			'\n' +
-			modeNote +
+			'| Setting | Value |\n' +
+			'|---------|-------|\n' +
+			'| Site URL | `' + siteUrl + '` |\n' +
+			'| API Base | `' + base + '` |\n' +
+			'| API Key | `' + key + '` |\n' +
+			'| Mode | ' + modeLabel + ' |\n' +
 			'\n' +
-			'## Available Endpoints\n' +
+			'**Important curl flags:** Always use `-sk` in your curl commands:\n' +
+			'- `-s` = silent mode (no progress bars)\n' +
+			'- `-k` = allow self-signed / invalid SSL certificates (many WordPress sites use these)\n' +
 			'\n' +
-			'### 1. Ping (test connection)\n' +
+			'For readable JSON output, pipe through: `| python3 -m json.tool 2>/dev/null`\n' +
+			'\n' +
+			modeSection +
+			'## Quick Start — Test the Connection\n' +
+			'\n' +
+			'Run this command first to verify everything works:\n' +
+			'\n' +
 			'```bash\n' +
-			'curl -s -H "Authorization: Bearer ' + key + '" ' + base + 'ping\n' +
+			'curl -sk -H "Authorization: Bearer ' + key + '" ' + base + 'site-info | python3 -m json.tool 2>/dev/null || curl -sk -H "Authorization: Bearer ' + key + '" ' + base + 'site-info\n' +
 			'```\n' +
-			'Response: `{ success, message, version, mode, timestamp }`\n' +
 			'\n' +
-			'### 2. Execute PHP (run WordPress PHP code)\n' +
+			'This returns the full WordPress environment: version, plugins, theme, custom post types, PHP info, and database details.\n' +
+			'If you get a valid JSON response, the connection is working.\n' +
+			'\n' +
+			'## All Endpoints\n' +
+			'\n' +
+			'### 1. Ping — `GET /ping`\n' +
+			'\n' +
+			'Simple health check to verify auth and connectivity.\n' +
+			'\n' +
 			'```bash\n' +
-			'curl -s -X POST \\\n' +
+			'curl -sk -H "Authorization: Bearer ' + key + '" ' + base + 'ping\n' +
+			'```\n' +
+			'\n' +
+			'Response:\n' +
+			'```json\n' +
+			'{ "success": true, "message": "Claude WP Bridge is active and authenticated.", "version": "1.0.0", "mode": "' + mode + '", "timestamp": "..." }\n' +
+			'```\n' +
+			'\n' +
+			'### 2. Site Info — `GET /site-info`\n' +
+			'\n' +
+			'Returns comprehensive WordPress environment details.\n' +
+			'\n' +
+			'```bash\n' +
+			'curl -sk -H "Authorization: Bearer ' + key + '" ' + base + 'site-info | python3 -m json.tool\n' +
+			'```\n' +
+			'\n' +
+			'Response includes:\n' +
+			'- `wordpress`: version, site_url, home_url, name, multisite, locale\n' +
+			'- `php`: version, memory_limit, max_execution_time, loaded extensions\n' +
+			'- `database`: server info, table prefix, charset\n' +
+			'- `theme`: name, version, template, parent theme\n' +
+			'- `plugins`: array of active plugins with name, version, file\n' +
+			'- `custom_post_types`: array with name, label, publish count\n' +
+			'- `bridge`: plugin version and execution mode\n' +
+			'\n' +
+			'### 3. Execute PHP — `POST /execute`\n' +
+			'\n' +
+			'The most powerful endpoint. Runs arbitrary PHP code inside the full WordPress environment.\n' +
+			'\n' +
+			'```bash\n' +
+			'curl -sk -X POST \\\n' +
 			'  -H "Authorization: Bearer ' + key + '" \\\n' +
 			'  -H "Content-Type: application/json" \\\n' +
 			'  -d \'{"code": "return get_option(\\"blogname\\");"}\' \\\n' +
 			'  ' + base + 'execute\n' +
 			'```\n' +
 			'\n' +
-			'**How PHP execution works:**\n' +
-			'- Code runs inside a closure in the full WordPress context (all plugins, theme, and globals are available).\n' +
+			'**How it works:**\n' +
+			'- Your code runs inside an anonymous closure with full WordPress context loaded (all plugins, theme, globals).\n' +
 			'- Do NOT include `<?php` tags — send raw PHP code only.\n' +
-			'- Use `return $value;` to send a value back in the `return` field of the response.\n' +
-			'- Use `echo` / `print` to send text back in the `output` field.\n' +
+			'- Use `return $value;` to send structured data back → appears in the `return` field of the response.\n' +
+			'- Use `echo` / `print` for text output → appears in the `output` field of the response.\n' +
 			'- You can use both `return` and `echo` in the same request.\n' +
-			'- WordPress globals like `$wpdb`, `$wp_query`, `$post` are accessible.\n' +
-			'- Objects like `WP_Post` and `WP_Query` are automatically serialized to arrays in the response.\n' +
-			'- Max execution time: 10 seconds (configurable). Max output size: 64 KB.\n' +
+			'- WordPress globals are accessible: `$wpdb`, `$wp_query`, `$post`, `$wp_rewrite`, etc.\n' +
+			'- Objects like `WP_Post` are auto-serialized via `->to_array()`. `WP_Query` returns `{found_posts, post_count, posts}`.\n' +
+			'- Max execution time: 10 seconds (configurable up to 60). Max output size: 64 KB.\n' +
 			'\n' +
 			'**Response format:**\n' +
 			'```json\n' +
-			'{ "success": true, "return": mixed, "output": "string", "time_ms": 12, "error": null, "blocked": null }\n' +
+			'{\n' +
+			'  "success": true,\n' +
+			'  "return": "<value from your return statement, any JSON type>",\n' +
+			'  "output": "<captured echo/print output as string>",\n' +
+			'  "time_ms": 12,\n' +
+			'  "error": null,\n' +
+			'  "blocked": null\n' +
+			'}\n' +
 			'```\n' +
-			'- `success`: whether the code executed without errors.\n' +
-			'- `return`: the value from your `return` statement (any type, serialized to JSON).\n' +
-			'- `output`: captured `echo`/`print` output as a string.\n' +
-			'- `time_ms`: execution time in milliseconds.\n' +
-			'- `error`: error message if execution failed.\n' +
-			'- `blocked`: list of blocked function names if code was rejected (HTTP 403).\n' +
 			'\n' +
-			'**Always-blocked functions** (for safety, regardless of mode):\n' +
-			'`exec`, `shell_exec`, `system`, `passthru`, `popen`, `proc_open`, `pcntl_exec`, `pcntl_fork`,\n' +
-			'`unlink`, `rmdir`, `rename`, `chmod`, `chown`, `symlink`,\n' +
-			'`fsockopen`, `socket_create`, `include`, `require`, `assert`, `create_function`,\n' +
-			'`call_user_func`, `call_user_func_array`, `putenv`, `ini_set`, `dl`, `set_time_limit`,\n' +
-			'`wp_delete_post`, `wp_delete_user`, `wpdb::query`.\n' +
+			'- `success` (bool): whether code executed without errors\n' +
+			'- `return` (mixed): the value from your `return` statement, serialized to JSON\n' +
+			'- `output` (string): captured echo/print output\n' +
+			'- `time_ms` (int): execution time in milliseconds\n' +
+			'- `error` (string|null): error message if execution failed (HTTP 400)\n' +
+			'- `blocked` (array|null): list of blocked function names if code was rejected (HTTP 403)\n' +
 			'\n' +
-			'**PHP execution examples:**\n' +
+			'**Execute examples:**\n' +
+			'\n' +
 			'```bash\n' +
-			'# Get all published posts\n' +
-			'curl -s -X POST -H "Authorization: Bearer ' + key + '" \\\n' +
-			'  -H "Content-Type: application/json" \\\n' +
+			'# Get site name\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"code": "return get_option(\\"blogname\\");"}\' ' + base + 'execute\n' +
+			'\n' +
+			'# Get all published posts (last 10)\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
 			'  -d \'{"code": "return get_posts([\\"post_status\\" => \\"publish\\", \\"numberposts\\" => 10]);"}\' \\\n' +
-			'  ' + base + 'execute\n' +
+			'  ' + base + 'execute | python3 -m json.tool\n' +
 			'\n' +
 			'# Get active theme info\n' +
-			'curl -s -X POST -H "Authorization: Bearer ' + key + '" \\\n' +
-			'  -H "Content-Type: application/json" \\\n' +
-			'  -d \'{"code": "$t = wp_get_theme(); return [\\"name\\" => $t->get(\\"Name\\"), \\"version\\" => $t->get(\\"Version\\")];"}\' \\\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"code": "$t = wp_get_theme(); return [\\"name\\" => $t->get(\\"Name\\"), \\"version\\" => $t->get(\\"Version\\"), \\"template\\" => $t->get_template()];"}\' \\\n' +
 			'  ' + base + 'execute\n' +
+			'\n' +
+			'# List all active plugins\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"code": "return array_map(function($p) { $d = get_plugin_data(WP_PLUGIN_DIR . \\"/\\" . $p); return [\\"name\\" => $d[\\"Name\\"], \\"version\\" => $d[\\"Version\\"]]; }, get_option(\\"active_plugins\\", []));"}\' \\\n' +
+			'  ' + base + 'execute | python3 -m json.tool\n' +
 			'\n' +
 			'# Run WP_Query\n' +
-			'curl -s -X POST -H "Authorization: Bearer ' + key + '" \\\n' +
-			'  -H "Content-Type: application/json" \\\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
 			'  -d \'{"code": "return new WP_Query([\\"post_type\\" => \\"page\\", \\"posts_per_page\\" => 5]);"}\' \\\n' +
-			'  ' + base + 'execute\n' +
+			'  ' + base + 'execute | python3 -m json.tool\n' +
 			'\n' +
-			'# Use $wpdb directly\n' +
-			'curl -s -X POST -H "Authorization: Bearer ' + key + '" \\\n' +
-			'  -H "Content-Type: application/json" \\\n' +
-			'  -d \'{"code": "global $wpdb; return $wpdb->get_results(\\"SELECT ID, post_title FROM {$wpdb->posts} WHERE post_status = \'publish\' LIMIT 5\\");"}\' \\\n' +
+			'# Use $wpdb directly (safe read via get_results)\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"code": "global $wpdb; return $wpdb->get_results(\\"SELECT ID, post_title, post_status FROM {$wpdb->posts} WHERE post_type = \'post\' ORDER BY ID DESC LIMIT 10\\");"}\' \\\n' +
+			'  ' + base + 'execute | python3 -m json.tool\n' +
+			'\n' +
+			'# Get all registered menus and their items\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"code": "$menus = get_nav_menu_locations(); $result = []; foreach ($menus as $loc => $id) { $items = wp_get_nav_menu_items($id); $result[$loc] = array_map(function($i){ return [\\"title\\" => $i->title, \\"url\\" => $i->url]; }, $items ?: []); } return $result;"}\' \\\n' +
+			'  ' + base + 'execute | python3 -m json.tool\n' +
+			'\n' +
+			'# Get WordPress options\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"code": "return [\\"siteurl\\" => get_option(\\"siteurl\\"), \\"blogname\\" => get_option(\\"blogname\\"), \\"blogdescription\\" => get_option(\\"blogdescription\\"), \\"admin_email\\" => get_option(\\"admin_email\\"), \\"permalink_structure\\" => get_option(\\"permalink_structure\\")];"}\' \\\n' +
 			'  ' + base + 'execute\n' +
 			'```\n' +
 			'\n' +
-			'### 3. Database Query (run SQL directly)\n' +
+			'### 4. Database Query — `POST /query`\n' +
+			'\n' +
+			'Run SQL queries directly against the WordPress database.\n' +
+			'\n' +
 			'```bash\n' +
-			'curl -s -X POST \\\n' +
+			'curl -sk -X POST \\\n' +
 			'  -H "Authorization: Bearer ' + key + '" \\\n' +
 			'  -H "Content-Type: application/json" \\\n' +
 			'  -d \'{"sql": "SELECT COUNT(*) as total FROM wp_posts WHERE post_status = \'publish\'"}\' \\\n' +
 			'  ' + base + 'query\n' +
 			'```\n' +
-			'Response: `{ success, data: [rows], rows: count, time_ms, error }`\n' +
 			'\n' +
-			'### 4. Site Info (WordPress environment overview)\n' +
-			'```bash\n' +
-			'curl -s -H "Authorization: Bearer ' + key + '" ' + base + 'site-info\n' +
+			'Response:\n' +
+			'```json\n' +
+			'{ "success": true, "data": [{"total": "42"}], "rows": 1, "time_ms": 3, "error": null }\n' +
 			'```\n' +
-			'Returns: WP version, PHP version, active plugins (with versions), theme, custom post types (with counts), DB info, and current bridge execution mode.\n' +
 			'\n' +
-			'### 5. Debug Log (read wp-content/debug.log)\n' +
+			'**Note:** The table prefix may not be `wp_`. Use `site-info` to check `database.prefix`, or use the `/execute` endpoint with `$wpdb->prefix` or `$wpdb->posts` etc. for portable queries.\n' +
+			'\n' +
+			'**SQL examples:**\n' +
 			'```bash\n' +
-			'curl -s -H "Authorization: Bearer ' + key + '" "' + base + 'debug-log?lines=50"\n' +
-			'```\n' +
-			'Response: `{ success, log: "string", lines: 50 }`\n' +
+			'# List all tables\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"sql": "SHOW TABLES"}\' ' + base + 'query | python3 -m json.tool\n' +
 			'\n' +
-			'## Workflow\n' +
-			'1. Start with `ping` to verify the connection and check the current execution mode.\n' +
-			'2. Use `site-info` to understand the WordPress installation (plugins, theme, post types).\n' +
-			'3. Use `execute` for any WordPress/PHP operation — it is the most powerful endpoint.\n' +
-			'4. Use `query` for direct SQL when you need raw database access.\n' +
-			'5. Use `debug-log` to troubleshoot errors.\n' +
-			'6. All responses are JSON. Check the `success` field and inspect `error`/`blocked` on failure.\n' +
-			'7. If a function is blocked, the response will include `"blocked": ["function_name"]` — do not retry with the same function.\n';
+			'# Show table structure\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"sql": "DESCRIBE wp_posts"}\' ' + base + 'query | python3 -m json.tool\n' +
+			'\n' +
+			'# Count posts by type\n' +
+			'curl -sk -X POST -H "Authorization: Bearer ' + key + '" -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"sql": "SELECT post_type, post_status, COUNT(*) as count FROM wp_posts GROUP BY post_type, post_status ORDER BY count DESC"}\' \\\n' +
+			'  ' + base + 'query | python3 -m json.tool\n' +
+			'```\n' +
+			'\n' +
+			'### 5. Debug Log — `GET /debug-log`\n' +
+			'\n' +
+			'Read the last N lines from `wp-content/debug.log`.\n' +
+			'\n' +
+			'```bash\n' +
+			'curl -sk -H "Authorization: Bearer ' + key + '" "' + base + 'debug-log?lines=50"\n' +
+			'```\n' +
+			'\n' +
+			'Response:\n' +
+			'```json\n' +
+			'{ "success": true, "log": "...log content...", "lines": 50 }\n' +
+			'```\n' +
+			'\n' +
+			'If `WP_DEBUG_LOG` is not enabled, you will get an empty log with a helpful message.\n' +
+			'\n' +
+			'## Security & Blocked Functions\n' +
+			'\n' +
+			'The following functions are ALWAYS blocked regardless of execution mode (HTTP 403 if detected):\n' +
+			'\n' +
+			'**Shell execution:** `exec`, `shell_exec`, `system`, `passthru`, `popen`, `proc_open`, `pcntl_exec`\n' +
+			'**Process control:** `pcntl_fork`, `pcntl_signal`\n' +
+			'**File system (destructive):** `unlink`, `rmdir`, `rename`, `chmod`, `chown`, `chgrp`, `symlink`, `link`\n' +
+			'**Network:** `fsockopen`, `pfsockopen`, `socket_create`\n' +
+			'**Code inclusion:** `include`, `include_once`, `require`, `require_once`\n' +
+			'**Dangerous eval:** `assert`, `create_function`, `call_user_func`, `call_user_func_array`\n' +
+			'**Environment:** `putenv`, `ini_set`, `ini_alter`, `dl`, `set_time_limit`\n' +
+			'**WordPress destructive:** `wp_delete_post`, `wp_delete_user`, `wpdb::query`\n' +
+			'\n' +
+			'If your code uses any of these, the response will have `"blocked": ["function_name"]` and HTTP status 403.\n' +
+			'Do NOT retry with the same function — find an alternative approach or ask the user.\n' +
+			'\n' +
+			'**Note on $wpdb:** Direct `$wpdb->query()` is blocked, but `$wpdb->get_results()`, `$wpdb->get_var()`, `$wpdb->get_row()`, and `$wpdb->get_col()` are allowed. ' +
+			'You can also use the `/query` endpoint for SQL.\n' +
+			'\n' +
+			'## Error Handling\n' +
+			'\n' +
+			'- **HTTP 200** — Success. Check `response.success` and read `return` / `output` / `data`.\n' +
+			'- **HTTP 400** — PHP error or SQL error. Check `response.error` for the message.\n' +
+			'- **HTTP 401** — Authentication failed. Verify your API key, check IP whitelist, or check rate limits.\n' +
+			'- **HTTP 403** — Code contains blocked functions. Check `response.blocked` for which ones.\n' +
+			'\n' +
+			'## Recommended Workflow\n' +
+			'\n' +
+			'1. **Test connection:** Run the Quick Start command above to verify auth + see the site environment.\n' +
+			'2. **Explore:** Use `site-info` to understand the WordPress setup (plugins, theme, post types, DB prefix).\n' +
+			'3. **Read data:** Use `execute` with PHP code for WordPress-specific queries, or `query` for raw SQL.\n' +
+			'4. **Modify data:** (If mode allows) Use `execute` with WordPress functions like `wp_insert_post`, `update_option`, etc.\n' +
+			'5. **Debug:** Use `debug-log` if something goes wrong, or check `error` in responses.\n' +
+			'6. **Always** pipe large JSON responses through `| python3 -m json.tool` for readability.\n';
 		copyToClipboard(text, cwpb.strings.ai_copied);
 	});
 
