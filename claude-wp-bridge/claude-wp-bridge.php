@@ -3,7 +3,7 @@
  * Plugin Name:       Claude WP Bridge
  * Plugin URI:        https://github.com/PThagaard/Claude-WP-Executable
  * Description:       Secure bridge between Claude Code and WordPress. Allows Claude to execute PHP, run database queries, and inspect your WordPress installation in real-time via authenticated REST API endpoints.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 5.9
  * Requires PHP:      7.4
  * Author:            PThagaard
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Plugin constants.
  */
-define( 'CWPB_VERSION', '1.0.0' );
+define( 'CWPB_VERSION', '1.1.0' );
 define( 'CWPB_PLUGIN_FILE', __FILE__ );
 define( 'CWPB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CWPB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

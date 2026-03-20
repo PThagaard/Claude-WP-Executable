@@ -379,7 +379,26 @@
 			'4. **Modify data:** (If mode allows) Use `execute` with WordPress functions like `wp_insert_post`, `update_option`, etc.\n' +
 			'5. **Debug:** Use `debug-log` if something goes wrong, or check `error` in responses.\n' +
 			'6. **Always** pipe large JSON responses through `| python3 -m json.tool` for readability.\n';
-		copyToClipboard(text, cwpb.strings.ai_copied);
+		// Show the textarea with the generated text instead of relying on clipboard.
+		var $container = $('#cwpb-ai-text-container');
+		var $textarea  = $('#cwpb-ai-textarea');
+		$textarea.val(text);
+		$container.slideDown(200, function () {
+			$textarea.focus().select();
+		});
+	});
+
+	// Select All in AI textarea.
+	$(document).on('click', '#cwpb-select-all-ai', function (e) {
+		e.preventDefault();
+		var $textarea = $('#cwpb-ai-textarea');
+		$textarea.focus().select();
+	});
+
+	// Hide AI textarea.
+	$(document).on('click', '#cwpb-hide-ai-text', function (e) {
+		e.preventDefault();
+		$('#cwpb-ai-text-container').slideUp(200);
 	});
 
 	// Clear Audit Logs.

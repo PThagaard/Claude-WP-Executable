@@ -315,6 +315,20 @@ class CWPB_Admin {
 						</p>
 					<?php endif; ?>
 
+					<!-- AI Instructions textarea (shown/hidden by Copy to AI button) -->
+					<div id="cwpb-ai-text-container" style="display:none; margin-top: 12px;">
+						<p><strong><?php esc_html_e( 'Copy the text below and paste it into your Claude / AI session:', 'claude-wp-bridge' ); ?></strong></p>
+						<textarea id="cwpb-ai-textarea" readonly rows="20" style="width:100%; font-family:monospace; font-size:12px; background:#f6f7f7; border:1px solid #c3c4c7; padding:10px;"></textarea>
+						<p>
+							<button type="button" class="button" id="cwpb-select-all-ai">
+								<?php esc_html_e( 'Select All', 'claude-wp-bridge' ); ?>
+							</button>
+							<button type="button" class="button" id="cwpb-hide-ai-text">
+								<?php esc_html_e( 'Hide', 'claude-wp-bridge' ); ?>
+							</button>
+						</p>
+					</div>
+
 					<p>
 						<button type="button" class="button button-secondary" id="cwpb-regenerate-key">
 							<?php esc_html_e( 'Regenerate Key', 'claude-wp-bridge' ); ?>
