@@ -61,6 +61,7 @@ class CWPB_Admin {
 		add_action( 'wp_ajax_cwpb_generate_key', array( $this, 'ajax_generate_key' ) );
 		add_action( 'wp_ajax_cwpb_revoke_key', array( $this, 'ajax_revoke_key' ) );
 		add_action( 'wp_ajax_cwpb_clear_logs', array( $this, 'ajax_clear_logs' ) );
+		add_action( 'wp_ajax_cwpb_get_ai_guide', array( $this, 'ajax_get_ai_guide' ) );
 	}
 
 	/**
@@ -273,6 +274,30 @@ class CWPB_Admin {
 	}
 
 	/**
+	 * AJAX handler: Get the AI guide text.
+	 *
+	 * @since 2.0.0
+	 */
+	public function ajax_get_ai_guide() {
+		check_ajax_referer( 'cwpb_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Insufficient permissions.' );
+		}
+
+		$api_key = get_option( 'cwpb_api_key_plain', '' );
+		if ( empty( $api_key ) ) {
+			wp_send_json_error( 'No API key configured.' );
+		}
+
+		$guide = CWPB_AI_Guide::generate( $api_key );
+
+		wp_send_json_success( array(
+			'guide' => $guide,
+		) );
+	}
+
+	/**
 	 * Render the main settings page.
 	 *
 	 * @since 1.0.0
@@ -284,10 +309,56 @@ class CWPB_Admin {
 
 		?>
 		<div class="wrap cwpb-wrap">
-			<h1><?php esc_html_e( 'Claude WP Bridge', 'claude-wp-bridge' ); ?></h1>
+			<h1><?php esc_html_e( 'Claude WP Bridge', 'claude-wp-bridge' ); ?> <span class="cwpb-version">v<?php echo esc_html( CWPB_VERSION ); ?></span></h1>
 			<p class="description">
 				<?php esc_html_e( 'Secure bridge between Claude Code and your WordPress installation.', 'claude-wp-bridge' ); ?>
 			</p>
+
+			<?php if ( get_option( 'cwpb_enabled', true ) && $has_key ) : ?>
+			<!-- Emergency Kill Switch -->
+			<div class="cwpb-card cwpb-killswitch-card">
+				<div class="cwpb-killswitch-row">
+					<div>
+						<span class="cwpb-status cwpb-status-success"><?php esc_html_e( 'Bridge Active', 'claude-wp-bridge' ); ?></span>
+						<span class="cwpb-mode-badge cwpb-mode-<?php echo esc_attr( get_option( 'cwpb_execution_mode', 'read_only' ) ); ?>">
+							<?php
+							$modes = array(
+								'read_only'  => __( 'Read-Only', 'claude-wp-bridge' ),
+								'read_write' => __( 'Read-Write', 'claude-wp-bridge' ),
+								'full'       => __( 'Full Access', 'claude-wp-bridge' ),
+							);
+							echo esc_html( $modes[ get_option( 'cwpb_execution_mode', 'read_only' ) ] ?? 'Unknown' );
+							?>
+						</span>
+						<span class="cwpb-endpoint-count"><?php esc_html_e( '18 endpoints available', 'claude-wp-bridge' ); ?></span>
+					</div>
+					<form method="post" action="options.php" style="display:inline;">
+						<?php settings_fields( 'cwpb_settings' ); ?>
+						<input type="hidden" name="cwpb_enabled" value="0" />
+						<?php submit_button( __( 'Emergency: Disable Bridge', 'claude-wp-bridge' ), 'cwpb-button-danger', 'submit', false ); ?>
+					</form>
+				</div>
+			</div>
+			<?php elseif ( ! get_option( 'cwpb_enabled', true ) ) : ?>
+			<div class="cwpb-card cwpb-killswitch-card cwpb-disabled-card">
+				<div class="cwpb-killswitch-row">
+					<div>
+						<span class="cwpb-status cwpb-status-blocked"><?php esc_html_e( 'Bridge Disabled', 'claude-wp-bridge' ); ?></span>
+						<span class="description"><?php esc_html_e( 'All API requests are being rejected.', 'claude-wp-bridge' ); ?></span>
+					</div>
+					<form method="post" action="options.php" style="display:inline;">
+						<?php settings_fields( 'cwpb_settings' ); ?>
+						<input type="hidden" name="cwpb_enabled" value="1" />
+						<?php
+						// Preserve current execution mode.
+						$current_mode = get_option( 'cwpb_execution_mode', 'read_only' );
+						?>
+						<input type="hidden" name="cwpb_execution_mode" value="<?php echo esc_attr( $current_mode ); ?>" />
+						<?php submit_button( __( 'Re-enable Bridge', 'claude-wp-bridge' ), 'primary', 'submit', false ); ?>
+					</form>
+				</div>
+			</div>
+			<?php endif; ?>
 
 			<!-- API Key Management -->
 			<div class="cwpb-card">

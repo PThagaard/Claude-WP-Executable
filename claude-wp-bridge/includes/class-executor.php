@@ -114,6 +114,9 @@ class CWPB_Executor {
 				. "\n\n[Output truncated at {$max_output} bytes]";
 		}
 
+		// Scrub sensitive data from output.
+		$result['output'] = $this->scrub_sensitive_data( $result['output'] );
+
 		// Log the execution.
 		$this->logger->log( array(
 			'ip_address'        => $client_ip,
@@ -127,7 +130,8 @@ class CWPB_Executor {
 			'error_message'     => $result['success'] ? null : $result['error'],
 		) );
 
-		$result['time_ms'] = $time_ms;
+		$result['time_ms']    = $time_ms;
+		$result['memory_used'] = $result['memory_used'] ?? 0;
 		return $result;
 	}
 
@@ -233,6 +237,13 @@ class CWPB_Executor {
 		$error   = null;
 		$success = true;
 
+		// Enforce execution time limit.
+		$original_time_limit = (int) ini_get( 'max_execution_time' );
+		@set_time_limit( $max_time ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+
+		// Track memory usage.
+		$memory_before = memory_get_usage( true );
+
 		// Set a custom error handler to catch warnings and notices.
 		$errors_caught = array();
 		$previous_handler = set_error_handler( function ( $errno, $errstr, $errfile, $errline ) use ( &$errors_caught ) {
@@ -267,8 +278,13 @@ class CWPB_Executor {
 
 		$output = ob_get_clean();
 
-		// Restore previous error handler.
+		// Restore previous error handler and time limit.
 		restore_error_handler();
+		@set_time_limit( $original_time_limit ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+
+		// Calculate memory delta.
+		$memory_after = memory_get_usage( true );
+		$memory_used  = $memory_after - $memory_before;
 
 		// If there were non-fatal errors, append them to the output.
 		if ( ! empty( $errors_caught ) && $success ) {
@@ -281,10 +297,11 @@ class CWPB_Executor {
 		}
 
 		return array(
-			'success' => $success,
-			'return'  => $return,
-			'output'  => $output,
-			'error'   => $error,
+			'success'     => $success,
+			'return'      => $return,
+			'output'      => $output,
+			'error'       => $error,
+			'memory_used' => $memory_used,
 		);
 	}
 
@@ -316,6 +333,46 @@ class CWPB_Executor {
 			return 'Object(' . get_class( $value ) . ')';
 		}
 		return gettype( $value );
+	}
+
+	/**
+	 * Scrub sensitive data from output strings.
+	 *
+	 * Redacts database passwords, secret keys, and other credentials
+	 * that might leak through code execution results.
+	 *
+	 * @since  2.0.0
+	 * @param  string $text The text to scrub.
+	 * @return string The scrubbed text.
+	 */
+	private function scrub_sensitive_data( $text ) {
+		if ( empty( $text ) ) {
+			return $text;
+		}
+
+		// Redact known WordPress constants that contain secrets.
+		$secret_constants = array(
+			'DB_PASSWORD',
+			'AUTH_KEY',
+			'SECURE_AUTH_KEY',
+			'LOGGED_IN_KEY',
+			'NONCE_KEY',
+			'AUTH_SALT',
+			'SECURE_AUTH_SALT',
+			'LOGGED_IN_SALT',
+			'NONCE_SALT',
+		);
+
+		foreach ( $secret_constants as $const ) {
+			if ( defined( $const ) ) {
+				$value = constant( $const );
+				if ( ! empty( $value ) && strlen( $value ) > 3 ) {
+					$text = str_replace( $value, '[REDACTED]', $text );
+				}
+			}
+		}
+
+		return $text;
 	}
 
 	/**
