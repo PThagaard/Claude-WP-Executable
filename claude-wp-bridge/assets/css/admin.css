@@ -53,6 +53,11 @@
 	user-select: all;
 }
 
+/* Copy to AI button */
+#cwpb-copy-ai {
+	white-space: nowrap;
+}
+
 /* Notices */
 .cwpb-notice {
 	padding: 12px 16px;

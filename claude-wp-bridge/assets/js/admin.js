@@ -105,6 +105,30 @@
 		copyToClipboard(key);
 	});
 
+	// Copy to AI — endpoint + key ready for Claude.
+	$(document).on('click', '#cwpb-copy-ai', function (e) {
+		e.preventDefault();
+		var key = $('#cwpb-new-key').text();
+		if (!key) {
+			return;
+		}
+		var text = 'Claude WP Bridge connection for ' + cwpb.site_name + ':\n' +
+			'Endpoint: ' + cwpb.endpoint_url + '\n' +
+			'API Key: ' + key;
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(function () {
+				alert(cwpb.strings.ai_copied);
+			});
+		} else {
+			var $temp = $('<textarea>');
+			$('body').append($temp);
+			$temp.val(text).select();
+			document.execCommand('copy');
+			$temp.remove();
+			alert(cwpb.strings.ai_copied);
+		}
+	});
+
 	// Clear Audit Logs.
 	$(document).on('click', '#cwpb-clear-logs', function (e) {
 		e.preventDefault();

@@ -198,13 +198,16 @@ class CWPB_Admin {
 		);
 
 		wp_localize_script( 'cwpb-admin', 'cwpb', array(
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'cwpb_admin' ),
-			'strings'  => array(
+			'ajax_url'     => admin_url( 'admin-ajax.php' ),
+			'nonce'        => wp_create_nonce( 'cwpb_admin' ),
+			'endpoint_url' => rest_url( 'claude-bridge/v1/' ),
+			'site_name'    => get_bloginfo( 'name' ),
+			'strings'      => array(
 				'confirm_generate' => __( 'Generate a new API key? The current key will be revoked.', 'claude-wp-bridge' ),
 				'confirm_revoke'   => __( 'Revoke the API key? All active sessions will be disconnected.', 'claude-wp-bridge' ),
 				'confirm_clear'    => __( 'Clear all audit log entries? This cannot be undone.', 'claude-wp-bridge' ),
 				'key_copied'       => __( 'API key copied to clipboard!', 'claude-wp-bridge' ),
+				'ai_copied'        => __( 'Connection details copied — paste into your Claude session!', 'claude-wp-bridge' ),
 				'copy_warning'     => __( 'This key will only be shown once. Copy it now and store it securely.', 'claude-wp-bridge' ),
 			),
 		) );
@@ -318,6 +321,9 @@ class CWPB_Admin {
 							<button type="button" class="button" id="cwpb-copy-key">
 								<?php esc_html_e( 'Copy', 'claude-wp-bridge' ); ?>
 							</button>
+							<button type="button" class="button button-primary" id="cwpb-copy-ai">
+								<?php esc_html_e( 'Copy to AI', 'claude-wp-bridge' ); ?>
+							</button>
 						</div>
 					</div>
 
@@ -339,6 +345,9 @@ class CWPB_Admin {
 							<code id="cwpb-new-key" class="cwpb-key-value"></code>
 							<button type="button" class="button" id="cwpb-copy-key">
 								<?php esc_html_e( 'Copy', 'claude-wp-bridge' ); ?>
+							</button>
+							<button type="button" class="button button-primary" id="cwpb-copy-ai">
+								<?php esc_html_e( 'Copy to AI', 'claude-wp-bridge' ); ?>
 							</button>
 						</div>
 					</div>
