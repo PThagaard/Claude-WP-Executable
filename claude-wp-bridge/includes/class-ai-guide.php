@@ -50,8 +50,30 @@ class CWPB_AI_Guide {
 		// Header.
 		$text .= "# Claude WP Bridge — {$site_name}\n\n";
 		$text .= "You have access to a live WordPress site through the Claude WP Bridge plugin.\n";
-		$text .= "This plugin exposes a REST API that lets you execute PHP code, run SQL queries, and deeply inspect the WordPress/WooCommerce installation.\n";
+		$text .= "This plugin exposes a REST API that lets you execute PHP code, run SQL queries, and deeply inspect the WordPress/WooCommerce installation in real-time.\n";
 		$text .= "All communication happens via `curl` with Bearer token authentication. All responses are JSON.\n\n";
+
+		// CRITICAL: CLAUDE.md instruction.
+		$text .= "## IMPORTANT: Save These Credentials\n\n";
+		$text .= "**Your first action** must be to save these connection details so they persist across sessions.\n";
+		$text .= "Create or update a `CLAUDE.md` file in the project root with the following content:\n\n";
+		$text .= "```markdown\n";
+		$text .= "# Project: {$site_name}\n\n";
+		$text .= "## WordPress Bridge (Claude WP Bridge v" . CWPB_VERSION . ")\n\n";
+		$text .= "This project has a live WordPress bridge. You can execute PHP code and SQL queries directly on the site.\n\n";
+		$text .= "- Site URL: {$site_url}\n";
+		$text .= "- API Base: {$base}\n";
+		$text .= "- API Key: {$api_key}\n";
+		$text .= "- Mode: {$mode_label}\n";
+		if ( $has_woo ) {
+			$text .= "- WooCommerce: Active (v" . WC_VERSION . ")\n";
+		}
+		$text .= "\n";
+		$text .= "Always use `curl -sk` flags. Pipe JSON through `| python3 -m json.tool 2>/dev/null`.\n";
+		$text .= "See the plugin's \"Copy to AI\" button in WP Admin > Claude Bridge for full endpoint documentation.\n";
+		$text .= "```\n\n";
+		$text .= "This ensures that every future Claude Code session in this project automatically knows about the bridge.\n";
+		$text .= "**Do this now before doing anything else.** Then verify the connection with a ping.\n\n";
 
 		// Connection details.
 		$text .= "## Connection Details\n\n";
@@ -69,15 +91,6 @@ class CWPB_AI_Guide {
 		// Important curl flags.
 		$text .= "**Important:** Always use `-sk` in curl commands (`-s` = silent, `-k` = allow self-signed SSL).\n";
 		$text .= "For readable JSON: `| python3 -m json.tool 2>/dev/null`\n\n";
-
-		// Shorthand helper.
-		$text .= "**Curl shorthand** — to save typing, set this alias at session start:\n";
-		$text .= "```bash\n";
-		$text .= "BRIDGE=\"{$base}\"\n";
-		$text .= "AUTH=\"Authorization: Bearer {$api_key}\"\n";
-		$text .= "# Then use: curl -sk -H \"\$AUTH\" \"\$BRIDGE\"ping\n";
-		$text .= "# Or POST:  curl -sk -X POST -H \"\$AUTH\" -H \"Content-Type: application/json\" -d '{\"code\": \"...\"}' \"\$BRIDGE\"execute\n";
-		$text .= "```\n\n";
 
 		// Mode section.
 		$text .= self::mode_section( $mode );
@@ -302,14 +315,36 @@ class CWPB_AI_Guide {
 		$text .= "7. **Debug:** Use `GET /debug-log` to check for PHP errors. Check `error` in responses.\n";
 		$text .= "8. **Always** pipe large JSON through `| python3 -m json.tool` for readability.\n\n";
 
+		// Developer use cases.
+		$text .= "## Developer Use Cases\n\n";
+		$text .= "Use the bridge proactively when developing. Here are common scenarios:\n\n";
+		$text .= "| Scenario | What to do |\n";
+		$text .= "|----------|------------|\n";
+		$text .= "| Starting a dev session | `GET /ping` then `GET /site-info` to understand the environment |\n";
+		$text .= "| Debugging WooCommerce checkout | `GET /hooks?hook=woocommerce_checkout_process` + `GET /debug-log` |\n";
+		$text .= "| Understanding database structure | `GET /db-schema` then `GET /db-schema?table=tablename` |\n";
+		$text .= "| Customizing product pages | `GET /theme-info` + `GET /taxonomies?taxonomy=product_cat` |\n";
+		$text .= "| Investigating performance | `GET /cron` + `GET /transients` + `GET /hooks?search=keyword` |\n";
+		$text .= "| Verifying store configuration | `GET /woocommerce?section=settings` + `GET /options?search=woocommerce` |\n";
+		$text .= "| Building shipping integration | `GET /woocommerce?section=shipping` + `GET /hooks?search=shipping` |\n";
+		$text .= "| Checking payment setup | `GET /woocommerce?section=payment-gateways` |\n";
+		$text .= "| Finding plugin settings | `GET /options?search=plugin_name` |\n";
+		$text .= "| Checking URL/permalink issues | `GET /rewrite-rules?search=product` |\n";
+		$text .= "| Verifying user roles | `GET /users` shows all users with roles |\n";
+		$text .= "| Testing PHP code live | `POST /execute` with any WordPress/PHP code |\n";
+		$text .= "| Running database queries | `POST /query` with SELECT/SHOW/DESCRIBE SQL |\n\n";
+
 		// Pro tips.
 		$text .= "## Pro Tips\n\n";
+		$text .= "- **Use the bridge during development** — whenever you need to check data, verify a function's output, or understand the site structure, use the bridge instead of guessing.\n";
 		$text .= "- When building WP_Query or get_posts calls, always use `return` to get structured data back.\n";
-		$text .= "- For database structure exploration, prefer `/db-schema` over manual SQL — it includes indexes and row counts.\n";
+		$text .= "- For database structure, prefer `/db-schema` over manual SQL — it includes indexes and row counts.\n";
 		$text .= "- Use `/options?search=keyword` to quickly find WordPress/plugin settings without guessing option names.\n";
 		$text .= "- Use `/hooks?search=keyword` to find what functions are hooked into specific WordPress actions.\n";
-		$text .= "- The `/execute` endpoint has the full WP context — you can call any WordPress function, any plugin function, and any theme function that's loaded.\n";
+		$text .= "- The `/execute` endpoint has the full WP context — you can call any WordPress function, any plugin function, and any theme function.\n";
 		$text .= "- Combine multiple operations in a single `/execute` call to reduce API requests.\n";
+		$text .= "- If the bridge returns an error or unexpected result, check `GET /debug-log` for PHP errors.\n";
+		$text .= "- The database table prefix is NOT `wp_` — always use `GET /site-info` to check `database.prefix` or use `\$wpdb->prefix` in PHP code.\n";
 
 		return $text;
 	}
