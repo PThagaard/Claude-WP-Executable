@@ -323,14 +323,33 @@ class CWPB_REST_API {
 	 * @return bool|WP_Error True if authorized, WP_Error otherwise.
 	 */
 	public function check_permission( WP_REST_Request $request ) {
-		if ( ! $this->security->authenticate( $request ) ) {
-			return new WP_Error(
-				'cwpb_unauthorized',
-				'Invalid or missing API key, IP not whitelisted, or rate limit exceeded.',
-				array( 'status' => 401 )
-			);
+		$result = $this->security->authenticate( $request );
+
+		if ( true === $result ) {
+			return true;
 		}
-		return true;
+
+		$messages = array(
+			'bridge_disabled'    => 'Claude WP Bridge is disabled. Enable it in WP Admin > Claude Bridge > Settings.',
+			'missing_auth_header' => 'Missing Authorization header. Use: -H "Authorization: Bearer YOUR_API_KEY"',
+			'invalid_auth_format' => 'Invalid Authorization format. Expected: Bearer YOUR_API_KEY',
+			'empty_api_key'      => 'Empty API key provided.',
+			'no_key_configured'  => 'No API key configured on the server. Generate one in WP Admin > Claude Bridge.',
+			'invalid_api_key'    => 'Invalid API key. Check your key or regenerate in WP Admin > Claude Bridge.',
+			'ip_not_whitelisted' => 'Your IP (' . $this->security->get_client_ip() . ') is not on the whitelist. Add it in WP Admin > Claude Bridge > Settings.',
+			'rate_limit_exceeded' => 'Rate limit exceeded. Wait and retry. Current limit: ' . get_option( 'cwpb_rate_limit', 30 ) . ' requests per ' . get_option( 'cwpb_rate_limit_window', 60 ) . 's.',
+		);
+
+		$status_codes = array(
+			'rate_limit_exceeded' => 429,
+			'ip_not_whitelisted'  => 403,
+			'bridge_disabled'     => 503,
+		);
+
+		$message = $messages[ $result ] ?? 'Authentication failed.';
+		$status  = $status_codes[ $result ] ?? 401;
+
+		return new WP_Error( 'cwpb_' . $result, $message, array( 'status' => $status ) );
 	}
 
 	/**
