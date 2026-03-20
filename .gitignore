@@ -1,0 +1,28 @@
+# Environment variables (contains API keys)
+.env
+.env.local
+.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (MCP server)
+node_modules/
+npm-debug.log*
+
+# WordPress
+wp-config.php
+
+# Logs
+*.log
+
+# Archives
+*.zip
+*.tar.gz

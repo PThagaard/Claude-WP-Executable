@@ -1,0 +1,170 @@
+/**
+ * Claude WP Bridge — Admin Styles
+ *
+ * Styles for the plugin settings page and audit log viewer.
+ *
+ * @package ClaudeWPBridge
+ * @since   1.0.0
+ */
+
+/* Layout */
+.cwpb-wrap {
+	max-width: 960px;
+}
+
+/* Cards */
+.cwpb-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 20px 24px;
+	margin: 20px 0;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.cwpb-card h2 {
+	margin-top: 0;
+	padding-top: 0;
+	border-bottom: 1px solid #f0f0f1;
+	padding-bottom: 12px;
+}
+
+.cwpb-card h3 {
+	margin-top: 24px;
+}
+
+/* API Key Display */
+.cwpb-key-container {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 10px 0;
+}
+
+.cwpb-key-value {
+	display: block;
+	padding: 8px 12px;
+	background: #f6f7f7;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	font-size: 13px;
+	word-break: break-all;
+	flex: 1;
+	user-select: all;
+}
+
+/* Notices */
+.cwpb-notice {
+	padding: 12px 16px;
+	border-radius: 4px;
+	margin: 16px 0;
+}
+
+.cwpb-notice-warning {
+	background: #fcf9e8;
+	border: 1px solid #dba617;
+	border-left-width: 4px;
+}
+
+.cwpb-notice-success {
+	background: #edfaef;
+	border: 1px solid #00a32a;
+	border-left-width: 4px;
+}
+
+/* Buttons */
+.cwpb-button-danger {
+	color: #b32d2e !important;
+	border-color: #b32d2e !important;
+}
+
+.cwpb-button-danger:hover {
+	background: #b32d2e !important;
+	color: #fff !important;
+}
+
+/* Connection Info */
+.cwpb-connection-info {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid #f0f0f1;
+}
+
+.cwpb-connection-info code {
+	padding: 4px 8px;
+	background: #f0f0f1;
+	border-radius: 3px;
+	font-size: 12px;
+}
+
+/* Audit Log */
+.cwpb-log-actions {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 16px 0;
+}
+
+.cwpb-log-filter a {
+	text-decoration: none;
+}
+
+.cwpb-log-filter a.current {
+	font-weight: 600;
+	color: #1d2327;
+}
+
+/* Status badges */
+.cwpb-status {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.cwpb-status-success {
+	background: #edfaef;
+	color: #00a32a;
+}
+
+.cwpb-status-error {
+	background: #fcf0f1;
+	color: #b32d2e;
+}
+
+.cwpb-status-blocked {
+	background: #fcf9e8;
+	color: #996800;
+}
+
+/* Log table details */
+.wp-list-table details summary {
+	cursor: pointer;
+	max-width: 300px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wp-list-table details pre {
+	margin-top: 8px;
+	padding: 8px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	font-size: 12px;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	max-height: 200px;
+	overflow-y: auto;
+}
+
+/* Column widths for log table */
+.column-timestamp { width: 140px; }
+.column-ip { width: 120px; }
+.column-endpoint { width: 80px; }
+.column-code { width: auto; }
+.column-result { width: 150px; }
+.column-time { width: 70px; }
+.column-status { width: 80px; }
