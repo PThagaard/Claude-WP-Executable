@@ -27,12 +27,14 @@
 	/**
 	 * Copy text to the clipboard.
 	 *
-	 * @param {string} text The text to copy.
+	 * @param {string} text    The text to copy.
+	 * @param {string} message Optional alert message (defaults to key_copied).
 	 */
-	function copyToClipboard(text) {
+	function copyToClipboard(text, message) {
+		var msg = message || cwpb.strings.key_copied;
 		if (navigator.clipboard && navigator.clipboard.writeText) {
 			navigator.clipboard.writeText(text).then(function () {
-				alert(cwpb.strings.key_copied);
+				alert(msg);
 			});
 		} else {
 			// Fallback for older browsers.
@@ -41,7 +43,7 @@
 			$temp.val(text).select();
 			document.execCommand('copy');
 			$temp.remove();
-			alert(cwpb.strings.key_copied);
+			alert(msg);
 		}
 	}
 
@@ -105,28 +107,69 @@
 		copyToClipboard(key);
 	});
 
-	// Copy to AI — endpoint + key ready for Claude.
+	// Copy to AI — full instruction block for any Claude session.
 	$(document).on('click', '#cwpb-copy-ai', function (e) {
 		e.preventDefault();
 		var key = $('#cwpb-new-key').text();
 		if (!key) {
 			return;
 		}
-		var text = 'Claude WP Bridge connection for ' + cwpb.site_name + ':\n' +
-			'Endpoint: ' + cwpb.endpoint_url + '\n' +
-			'API Key: ' + key;
-		if (navigator.clipboard && navigator.clipboard.writeText) {
-			navigator.clipboard.writeText(text).then(function () {
-				alert(cwpb.strings.ai_copied);
-			});
-		} else {
-			var $temp = $('<textarea>');
-			$('body').append($temp);
-			$temp.val(text).select();
-			document.execCommand('copy');
-			$temp.remove();
-			alert(cwpb.strings.ai_copied);
-		}
+		var base = cwpb.endpoint_url;
+		var text =
+			'# Claude WP Bridge — ' + cwpb.site_name + '\n' +
+			'\n' +
+			'You have access to a live WordPress site via the Claude WP Bridge plugin.\n' +
+			'Use the endpoints below with curl to inspect and interact with the site.\n' +
+			'\n' +
+			'## Connection\n' +
+			'- **Base URL:** ' + base + '\n' +
+			'- **API Key:** ' + key + '\n' +
+			'- **Auth header:** `Authorization: Bearer ' + key + '`\n' +
+			'\n' +
+			'## Available Endpoints\n' +
+			'\n' +
+			'### 1. Ping (test connection)\n' +
+			'```bash\n' +
+			'curl -s -H "Authorization: Bearer ' + key + '" ' + base + 'ping\n' +
+			'```\n' +
+			'\n' +
+			'### 2. Execute PHP (run any WordPress PHP code)\n' +
+			'```bash\n' +
+			'curl -s -X POST \\\n' +
+			'  -H "Authorization: Bearer ' + key + '" \\\n' +
+			'  -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"code": "return get_option(\\"blogname\\");"}\' \\\n' +
+			'  ' + base + 'execute\n' +
+			'```\n' +
+			'The code runs in full WordPress context with all plugins/theme loaded.\n' +
+			'Use `return` to send a value back, or `echo`/`print` for output.\n' +
+			'\n' +
+			'### 3. Database Query (run SQL)\n' +
+			'```bash\n' +
+			'curl -s -X POST \\\n' +
+			'  -H "Authorization: Bearer ' + key + '" \\\n' +
+			'  -H "Content-Type: application/json" \\\n' +
+			'  -d \'{"sql": "SELECT COUNT(*) as total FROM wp_posts WHERE post_status = \'publish\'"}\' \\\n' +
+			'  ' + base + 'query\n' +
+			'```\n' +
+			'\n' +
+			'### 4. Site Info (WordPress environment details)\n' +
+			'```bash\n' +
+			'curl -s -H "Authorization: Bearer ' + key + '" ' + base + 'site-info\n' +
+			'```\n' +
+			'Returns: WP version, PHP version, active plugins, theme, custom post types, DB info.\n' +
+			'\n' +
+			'### 5. Debug Log (read wp-content/debug.log)\n' +
+			'```bash\n' +
+			'curl -s -H "Authorization: Bearer ' + key + '" "' + base + 'debug-log?lines=50"\n' +
+			'```\n' +
+			'\n' +
+			'## Tips\n' +
+			'- Start with `ping` to verify the connection works.\n' +
+			'- Use `site-info` to get an overview of the WordPress installation.\n' +
+			'- The `execute` endpoint is the most powerful — any WordPress/PHP function is available.\n' +
+			'- All responses are JSON with a `success` boolean.\n';
+		copyToClipboard(text, cwpb.strings.ai_copied);
 	});
 
 	// Clear Audit Logs.
