@@ -204,7 +204,7 @@ class CWPB_AI_Guide {
 		$text .= "```bash\n";
 		$text .= "PAYLOAD=$(cat <<'PHPEOF'\n";
 		$text .= "{\n";
-		$text .= "  \"code\": \"global $wpdb; $results = $wpdb->get_results(\\\"SELECT post_type, post_status, COUNT(*) as cnt FROM {$wpdb->posts} GROUP BY post_type, post_status ORDER BY cnt DESC\\\"); return $results;\"\n";
+		$text .= "  \"code\": \"global \$wpdb; \$results = \$wpdb->get_results(\\\"SELECT post_type, post_status, COUNT(*) as cnt FROM {\$wpdb->posts} GROUP BY post_type, post_status ORDER BY cnt DESC\\\"); return \$results;\"\n";
 		$text .= "}\n";
 		$text .= "PHPEOF\n";
 		$text .= ")\n";
