@@ -198,7 +198,7 @@ class CWPB_Logger {
 	public function clear_all() {
 		global $wpdb;
 		$table_name = $wpdb->prefix . self::TABLE_NAME;
-		$wpdb->query( "TRUNCATE TABLE {$table_name}" );
+		$wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $table_name ) );
 	}
 
 	/**
@@ -210,6 +210,6 @@ class CWPB_Logger {
 	public function get_total_count() {
 		global $wpdb;
 		$table_name = $wpdb->prefix . self::TABLE_NAME;
-		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_name}" );
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table_name ) );
 	}
 }

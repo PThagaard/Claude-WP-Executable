@@ -854,20 +854,21 @@ class CWPB_REST_API {
 
 		$search = $request->get_param( 'search' );
 
-		$where = "WHERE option_name LIKE '_transient_%' AND option_name NOT LIKE '_transient_timeout_%'";
-		$args  = array();
-
 		if ( $search ) {
-			$where .= ' AND option_name LIKE %s';
-			$args[] = '%' . $wpdb->esc_like( '_transient_' . $search ) . '%';
+			$transients = $wpdb->get_results( $wpdb->prepare(
+				"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name NOT LIKE %s AND option_name LIKE %s ORDER BY option_name LIMIT 100",
+				$wpdb->esc_like( '_transient_' ) . '%',
+				$wpdb->esc_like( '_transient_timeout_' ) . '%',
+				'%' . $wpdb->esc_like( '_transient_' . $search ) . '%'
+			) );
+		} else {
+			$transients = $wpdb->get_results( $wpdb->prepare(
+				"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name NOT LIKE %s ORDER BY option_name LIMIT %d",
+				$wpdb->esc_like( '_transient_' ) . '%',
+				$wpdb->esc_like( '_transient_timeout_' ) . '%',
+				100
+			) );
 		}
-
-		$query = "SELECT option_name, option_value FROM {$wpdb->options} {$where} ORDER BY option_name LIMIT 100";
-		if ( ! empty( $args ) ) {
-			$query = $wpdb->prepare( $query, $args );
-		}
-
-		$transients = $wpdb->get_results( $query );
 		$result     = array();
 
 		foreach ( $transients as $t ) {
@@ -1194,9 +1195,10 @@ class CWPB_REST_API {
 
 		// Media summary.
 		global $wpdb;
-		$mime_counts = $wpdb->get_results(
-			"SELECT post_mime_type, COUNT(*) as count FROM {$wpdb->posts} WHERE post_type = 'attachment' GROUP BY post_mime_type ORDER BY count DESC"
-		);
+		$mime_counts = $wpdb->get_results( $wpdb->prepare(
+			"SELECT post_mime_type, COUNT(*) as count FROM {$wpdb->posts} WHERE post_type = %s GROUP BY post_mime_type ORDER BY count DESC",
+			'attachment'
+		) );
 
 		return new WP_REST_Response( array(
 			'success'     => true,
@@ -1332,15 +1334,18 @@ class CWPB_REST_API {
 
 		// Product type summary.
 		global $wpdb;
-		$type_counts = $wpdb->get_results(
+		$type_counts = $wpdb->get_results( $wpdb->prepare(
 			"SELECT t.name as type, COUNT(*) as count
 			FROM {$wpdb->posts} p
 			JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-			JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = 'product_type'
+			JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = %s
 			JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
-			WHERE p.post_type = 'product' AND p.post_status = 'publish'
-			GROUP BY t.name"
-		);
+			WHERE p.post_type = %s AND p.post_status = %s
+			GROUP BY t.name",
+			'product_type',
+			'product',
+			'publish'
+		) );
 
 		return new WP_REST_Response( array(
 			'success'     => true,
@@ -1470,9 +1475,11 @@ class CWPB_REST_API {
 	private function wc_taxes() {
 		global $wpdb;
 
-		$rates = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->prefix}woocommerce_tax_rates ORDER BY tax_rate_order LIMIT 100"
-		);
+		$rates = $wpdb->get_results( $wpdb->prepare(
+			'SELECT * FROM %i ORDER BY tax_rate_order LIMIT %d',
+			$wpdb->prefix . 'woocommerce_tax_rates',
+			100
+		) );
 
 		return new WP_REST_Response( array(
 			'success'     => true,
