@@ -179,7 +179,7 @@ class CWPB_Admin {
 	 */
 	public function enqueue_assets( $hook_suffix ) {
 		// Only load on our pages.
-		if ( ! str_contains( $hook_suffix, 'claude-wp-bridge' ) ) {
+		if ( false === strpos( $hook_suffix, 'claude-wp-bridge' ) ) {
 			return;
 		}
 

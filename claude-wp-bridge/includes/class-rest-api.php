@@ -565,7 +565,7 @@ class CWPB_REST_API {
 			if ( empty( $columns ) && $wpdb->last_error ) {
 				return new WP_REST_Response( array(
 					'success' => false,
-					'error'   => $wpdb->last_error,
+					'error'   => 'Table not found or access denied.',
 				), 400 );
 			}
 
