@@ -7,7 +7,7 @@
  * Requires at least: 5.9
  * Requires PHP:      7.4
  * Author:            PThagaard
- * Author URI:        https://github.com/PThagaard
+ * Author URI:        https://www.thagaard.org
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       claude-wp-bridge

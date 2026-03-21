@@ -3,9 +3,16 @@
 Comprehensive test cases for all 18 endpoints, focused on WooCommerce development
 and WordPress inspection use cases.
 
-**Target:** https://subify.dk
+**Target:** Your WordPress site (set `$BRIDGE` and `$KEY` below)
 **Bridge Version:** 2.0.0
-**Mode:** Read-Only
+
+## Setup
+
+Before running tests, set your environment variables:
+```bash
+export KEY="cwpb_your-api-key-here"
+export BRIDGE="https://your-site.com/wp-json/claude-bridge/v1"
+```
 
 ---
 

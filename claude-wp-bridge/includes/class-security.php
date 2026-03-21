@@ -141,43 +141,43 @@ class CWPB_Security {
 	public function authenticate( WP_REST_Request $request ) {
 		// Check if the plugin is enabled.
 		if ( ! get_option( 'cwpb_enabled', true ) ) {
-			return false;
+			return 'bridge_disabled';
 		}
 
 		// Get the Authorization header.
 		$auth_header = $request->get_header( 'Authorization' );
 		if ( empty( $auth_header ) ) {
-			return false;
+			return 'missing_auth_header';
 		}
 
 		// Extract the Bearer token.
 		if ( ! preg_match( '/^Bearer\s+(.+)$/i', $auth_header, $matches ) ) {
-			return false;
+			return 'invalid_auth_format';
 		}
 
 		$provided_key = trim( $matches[1] );
 		if ( empty( $provided_key ) ) {
-			return false;
+			return 'empty_api_key';
 		}
 
 		// Compare against stored hash.
 		$stored_hash = get_option( 'cwpb_api_key_hash', '' );
 		if ( empty( $stored_hash ) ) {
-			return false;
+			return 'no_key_configured';
 		}
 
 		if ( ! wp_check_password( $provided_key, $stored_hash ) ) {
-			return false;
+			return 'invalid_api_key';
 		}
 
 		// Check IP whitelist.
 		if ( ! $this->check_ip_whitelist( $request ) ) {
-			return false;
+			return 'ip_not_whitelisted';
 		}
 
 		// Check rate limit.
 		if ( ! $this->check_rate_limit( $request ) ) {
-			return false;
+			return 'rate_limit_exceeded';
 		}
 
 		return true;

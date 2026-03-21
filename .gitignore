@@ -23,6 +23,9 @@ wp-config.php
 # Logs
 *.log
 
+# Claude Code project instructions (contains site-specific credentials)
+CLAUDE.md
+
 # Archives
 *.zip
 *.tar.gz

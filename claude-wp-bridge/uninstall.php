@@ -39,9 +39,11 @@ foreach ( $options as $option ) {
 
 // Remove the audit log table.
 $table_name = $wpdb->prefix . 'cwpb_audit_log';
-$wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
+$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table_name ) );
 
 // Clean up any transients.
-$wpdb->query(
-	"DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_cwpb_%' OR option_name LIKE '_transient_timeout_cwpb_%'"
-);
+$wpdb->query( $wpdb->prepare(
+	"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+	$wpdb->esc_like( '_transient_cwpb_' ) . '%',
+	$wpdb->esc_like( '_transient_timeout_cwpb_' ) . '%'
+) );
